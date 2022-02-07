@@ -1,0 +1,21 @@
+{
+    "python.testing.pytestArgs": [
+        "tests",
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "editor.formatOnSave": true,
+    "python.formatting.blackPath": "black",
+    "python.formatting.provider": "black",
+    "python.linting.mypyEnabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": [
+        "--max-line-length = 99",
+    ],
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true,
+        },
+    },
+    "restructuredtext.confPath": "",
+}

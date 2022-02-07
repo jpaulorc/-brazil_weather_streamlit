@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "brazil_weather_streamlit"
+version = "0.1.0"
+description = "Brazil weather data visualization"
+authors = ["Joao Corte <jpaulorc@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+streamlit = "^1.5.0"
+pandas = "^1.4.0"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+mypy = "^0.931"
+black = "^22.1.0"
+pandas-stubs = "^1.2.0"
+ipython = "^8.0.1"
+isort = "^5.10.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 99
+
+[tool.isort]
+profile = "black"
