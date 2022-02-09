@@ -876,6 +876,18 @@ docs = ["Sphinx (>=4)", "furo (>=2021.7.5b38)", "proselint (>=0.10.2)", "sphinx-
 test = ["appdirs (==1.4.4)", "pytest (>=6)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)"]
 
 [[package]]
+name = "plotly"
+version = "5.5.0"
+description = "An open-source, interactive data visualization library for Python"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+six = "*"
+tenacity = ">=6.2.0"
+
+[[package]]
 name = "prometheus-client"
 version = "0.13.1"
 description = "Python client for the Prometheus monitoring system."
@@ -1216,6 +1228,17 @@ validators = "*"
 watchdog = {version = "*", markers = "platform_system != \"Darwin\""}
 
 [[package]]
+name = "tenacity"
+version = "8.0.1"
+description = "Retry code until it succeeds"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+doc = ["reno", "sphinx", "tornado (>=4.5)"]
+
+[[package]]
 name = "terminado"
 version = "0.13.1"
 description = "Tornado websocket backend for the Xterm.js Javascript terminal emulator library."
@@ -1386,7 +1409,7 @@ notebook = ">=4.4.1"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.2"
-content-hash = "28e6750ababe31c73ce9cbcda26d1236e3ca139574eb03c7089c3495405833e6"
+content-hash = "e4d1a42bc6187e0c0b6816d23b16bd7cf8133c4cb59e7de9771207d6f9837b3c"
 
 [metadata.files]
 altair = [
@@ -1999,6 +2022,10 @@ platformdirs = [
     {file = "platformdirs-2.4.1-py3-none-any.whl", hash = "sha256:1d7385c7db91728b83efd0ca99a5afb296cab9d0ed8313a45ed8ba17967ecfca"},
     {file = "platformdirs-2.4.1.tar.gz", hash = "sha256:440633ddfebcc36264232365d7840a970e75e1018d15b4327d11f91909045fda"},
 ]
+plotly = [
+    {file = "plotly-5.5.0-py2.py3-none-any.whl", hash = "sha256:bc7d19272560f73fe4c2c989c31b00774a35d3a76891fab0b72c17616862d0e0"},
+    {file = "plotly-5.5.0.tar.gz", hash = "sha256:20b8a1a0f0434f9b8d10eb7caa66e947a9a1d698e5a53d40d447bbc0d2ae41f0"},
+]
 prometheus-client = [
     {file = "prometheus_client-0.13.1-py3-none-any.whl", hash = "sha256:357a447fd2359b0a1d2e9b311a0c5778c330cfbe186d880ad5a6b39884652316"},
     {file = "prometheus_client-0.13.1.tar.gz", hash = "sha256:ada41b891b79fca5638bd5cfe149efa86512eaa55987893becd2c6d8d0a5dfc5"},
@@ -2268,6 +2295,10 @@ stack-data = [
 streamlit = [
     {file = "streamlit-1.5.0-py2.py3-none-any.whl", hash = "sha256:ac2ad021a4dc5407ca523890b60e940d383705d62f8084c58d62ac7ae877f54a"},
     {file = "streamlit-1.5.0.tar.gz", hash = "sha256:ba4ddbce6d28726b70ffa68b923c43813137a7a35f994f73eb44c57577ac9023"},
+]
+tenacity = [
+    {file = "tenacity-8.0.1-py3-none-any.whl", hash = "sha256:f78f4ea81b0fabc06728c11dc2a8c01277bfc5181b321a4770471902e3eb844a"},
+    {file = "tenacity-8.0.1.tar.gz", hash = "sha256:43242a20e3e73291a28bcbcacfd6e000b02d3857a9a9fff56b297a27afdc932f"},
 ]
 terminado = [
     {file = "terminado-0.13.1-py3-none-any.whl", hash = "sha256:f446b522b50a7aa68b5def0a02893978fb48cb82298b0ebdae13003c6ee6f198"},
