@@ -15,10 +15,12 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
-import seaborn as sns"""
-import pandas as pd
+import seaborn as sns
+import pandas as pd"""
+
 import streamlit as st
 from PIL import Image
+from weather import Weather
 
 # from branca.element import Figure
 
@@ -49,7 +51,7 @@ def display_header():
                 ### Data collected by [INMET](https://portal.inmet.gov.br/): National Institute of Meteorology.
             """
         )
-        st.image(Image.open("streamlit_app/img/INMET.png"))
+        # st.image(Image.open("img/INMET.png"))
 
     row1_2.markdown(
         """
@@ -66,6 +68,9 @@ def display_header():
     )
 
     st.markdown("---")
+
+    weather = Weather()
+    weather.save_sample()
 
 
 display_header()
