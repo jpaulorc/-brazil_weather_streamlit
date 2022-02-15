@@ -8,16 +8,16 @@ import altair as alt
 import bar_chart_race as bcr
 import folium
 import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import missingno as msno
 import numpy as np
 
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
-import seaborn as sns
 import pandas as pd"""
 
+import matplotlib.pyplot as plt
+import seaborn as sns
 import streamlit as st
 from PIL import Image
 from weather import Weather
@@ -69,8 +69,35 @@ def display_header():
 
     st.markdown("---")
 
-    weather = Weather()
-    weather.save_sample()
+    weather = Weather(0.1)
+
+    row2_0, row2_1 = st.columns(2)
+
+    with row2_0:
+        df = weather.get_stations_location()
+
+        fig, ax = plt.subplots()
+        sns.set_theme(style="whitegrid")
+        stations = sns.lmplot(
+            x="longitude",
+            y="latitude",
+            data=df,
+            fit_reg=False,
+            legend=False,
+            scatter_kws={"s": 30},
+            hue="region",
+            height=10,
+        )
+
+        stations.set(xlabel="Longitude", ylabel="Latitude")
+        stations.fig.suptitle("Station's Location", fontsize=20)
+        stations.fig.legend(
+            labels=weather.get_unique_regions(), loc="center right", title="Region"
+        )
+
+        # plt.show()
+
+        st.write(fig)
 
 
 display_header()

@@ -1,11 +1,8 @@
 import csv
-import glob
 import itertools
-import os
 from pathlib import Path
 
 import pandas as pd
-import streamlit as st
 from stations import Stations
 
 # PATH = "data/brazil_weather/"
@@ -46,24 +43,18 @@ COL_NUMBERS = [
 
 
 class Weather:
-    def __init__(self) -> None:
+    def __init__(self, fraction: float) -> None:
         self.stations = Stations()
+        self.get_sample_weather(fraction)
 
     def asfloat_inplace(self, df: pd.DataFrame, columns: list):
         for col in columns:
             if df[col].dtype in [object, str]:
                 df[col] = df[col].str.replace(",", ".").astype(float)
 
-    def save_sample(self):
+    def get_sample_weather(self, fraction: float):
+        all_cities_df = []
         for filename in INPUT_PATH.iterdir():
-            # all_filenames = enumerate([i for i in glob.glob(f"*{FILE_EXTENSION}")])
-            # st.markdown(filename)
-
-            all_cities_df = []
-
-            """for index, row in all_filenames:
-                filename = PATH + row"""
-
             current_df = pd.read_csv(filename, sep=";", header=9)
 
             with open(filename, "r") as file:
@@ -73,16 +64,30 @@ class Weather:
                 all_cities_df.append(current_df)
                 file.close()
 
-        weather_df = pd.concat(all_cities_df)
-        weather_df.rename(columns=COLUMNS, inplace=True)
-        weather_df.drop("Unnamed: 11", axis=1, inplace=True)
+        stations_df = self.stations.stations_unification()
 
-        weather_df = pd.merge(
-            left=weather_df,
-            right=self.stations.stations_unification(),
+        self.weather_df = pd.concat(all_cities_df)
+        self.weather_df.rename(columns=COLUMNS, inplace=True)
+        self.weather_df.drop("Unnamed: 11", axis=1, inplace=True)
+
+        self.weather_df = pd.merge(
+            left=self.weather_df,
+            right=stations_df,
             left_on="station",
             right_on="station",
         )
 
-        self.asfloat_inplace(weather_df, COL_NUMBERS)
-        weather_df.to_csv(OUTPUT_PATH.joinpath(f"weather{FILE_EXTENSION}"), index=False)
+        self.asfloat_inplace(self.weather_df, COL_NUMBERS)
+        self.weather_df = self.weather_df.sample(frac=fraction, replace=True, random_state=1)
+        # weather_df.to_csv(OUTPUT_PATH.joinpath(f"weather{FILE_EXTENSION}"), index=False)
+
+    def get_stations_location(self):
+        df = self.weather_df.copy()
+
+        df = df.drop(df.columns.difference(["longitude", "latitude", "region"]), axis=1)
+        df = df.loc[df["latitude"] > -40]
+
+        return df
+
+    def get_unique_regions(self):
+        return self.weather_df.region.unique()
