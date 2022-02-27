@@ -147,93 +147,95 @@ def plot_corretation(weather_df):
         """
     )
 
-    df = weather_df.loc[
-        :,
-        [
-            "tot_precipitation",
-            "avg_atm_pressure",
-            "avg_dew_temp",
-            "max_temp",
-            "avg_temp",
-            "min_temp",
-            "avg_rel_humidity",
-            "max_blast_wind",
-            "avg_vel_wind",
-            "altitude",
-        ],
-    ]
+    with st.spinner("Little more... Working on the data..."):
+        df = weather_df.loc[
+            :,
+            [
+                "tot_precipitation",
+                "avg_atm_pressure",
+                "avg_dew_temp",
+                "max_temp",
+                "avg_temp",
+                "min_temp",
+                "avg_rel_humidity",
+                "max_blast_wind",
+                "avg_vel_wind",
+                "altitude",
+            ],
+        ]
 
-    df.dropna(inplace=True)
-    df.drop_duplicates(inplace=True)
+        df.dropna(inplace=True)
+        df.drop_duplicates(inplace=True)
 
-    df = df.corr()
-    df = df.iloc[1:, :-1]
+        df = df.corr()
+        df = df.iloc[1:, :-1]
 
-    mask = np.triu(np.ones_like(df), k=1)
+        mask = np.triu(np.ones_like(df), k=1)
 
-    plt.figure(figsize=(20, 10))
+        plt.figure(figsize=(20, 10))
 
-    x_axis_labels = [
-        "Precipitation (Tot)",
-        "Atm Pressure (Mean)",
-        "Dew Temp (Mean)",
-        "Temp (Max)",
-        "Temp (Mean)",
-        "Temp (Min)",
-        "Relative Humidity (Mean)",
-        "Wind Gust (Max)",
-        "Wind (Mean Vel)",
-    ]
+        x_axis_labels = [
+            "Precipitation (Tot)",
+            "Atm Pressure (Mean)",
+            "Dew Temp (Mean)",
+            "Temp (Max)",
+            "Temp (Mean)",
+            "Temp (Min)",
+            "Relative Humidity (Mean)",
+            "Wind Gust (Max)",
+            "Wind (Mean Vel)",
+        ]
 
-    y_axis_labels = [
-        "Atm Pressure (Mean)",
-        "Dew Temp (Mean)",
-        "Temp (Max)",
-        "Temp (Mean)",
-        "Temp (Min)",
-        "Relative Humidity (Mean)",
-        "Wind Gust (Max)",
-        "Wind (Mean Vel)",
-        "Latitude",
-    ]
+        y_axis_labels = [
+            "Atm Pressure (Mean)",
+            "Dew Temp (Mean)",
+            "Temp (Max)",
+            "Temp (Mean)",
+            "Temp (Min)",
+            "Relative Humidity (Mean)",
+            "Wind Gust (Max)",
+            "Wind (Mean Vel)",
+            "Latitude",
+        ]
 
-    ax = sns.heatmap(
-        df,
-        vmin=-1,
-        vmax=1,
-        cbar=False,
-        cmap="coolwarm",
-        mask=mask,
-        annot=True,
-        xticklabels=x_axis_labels,
-        yticklabels=y_axis_labels,
-    )
+        ax = sns.heatmap(
+            df,
+            vmin=-1,
+            vmax=1,
+            cbar=False,
+            cmap="coolwarm",
+            mask=mask,
+            annot=True,
+            xticklabels=x_axis_labels,
+            yticklabels=y_axis_labels,
+        )
 
-    for text in ax.texts:
-        value = float(text.get_text())
-        if -0.25 < value < 0.25:
-            text.set_text("")
-        else:
-            text.set_text(round(value, 2))
-        text.set_fontsize("12")
+        for text in ax.texts:
+            value = float(text.get_text())
+            if -0.25 < value < 0.25:
+                text.set_text("")
+            else:
+                text.set_text(round(value, 2))
+            text.set_fontsize("12")
 
-    plt.xticks(rotation=45, size="12")
-    plt.yticks(size="12")
+        plt.xticks(rotation=45, size="12")
+        plt.yticks(size="12")
     with st.spinner("Little more... Plotting the results..."):
         st.pyplot(plt)
 
 
 def set_weather_by_region(weather_df):
-    df = weather_df.loc[:, ["max_temp", "date", "region"]]
-    df.dropna(inplace=True)
-    df["month"] = pd.DatetimeIndex(df["date"]).month
-    region = {
-        "region": ["N", "NE", "CO", "SE", "S"],
-        "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
-    }
-    region_df = pd.DataFrame(region)
-    df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
-    df = df.sort_values(by=["month"])
+    with st.spinner("Little more... Working on the data..."):
+        df = weather_df.loc[:, ["max_temp", "date", "region"]]
+        df.dropna(inplace=True)
+        df["month"] = pd.DatetimeIndex(df["date"]).month
+        region = {
+            "region": ["N", "NE", "CO", "SE", "S"],
+            "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
+        }
+        region_df = pd.DataFrame(region)
+        df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
+        df = df.sort_values(by=["month"])
 
     return df
 
@@ -251,14 +253,14 @@ def plot_brazil_max_temp(df):
 
     plt.figure()
 
-    sns.set(rc={"figure.figsize": (13, 9)})
-    ax = sns.lineplot(y="max_temp", x="month", data=df)
-    ax.set(
-        xlabel="Mês",
-        ylabel="Temperature (Maximum)",
-        title="Maximum Temperature Variation in Brazil",
-    )
     with st.spinner("Little more... Plotting the results..."):
+        sns.set(rc={"figure.figsize": (13, 9)})
+        ax = sns.lineplot(y="max_temp", x="month", data=df)
+        ax.set(
+            xlabel="Mês",
+            ylabel="Temperature (Maximum)",
+            title="Maximum Temperature Variation in Brazil",
+        )
         st.pyplot(plt)
 
 
@@ -266,38 +268,34 @@ def plot_brazil_regions_max_temp(df):
     set_plot_title("Maximum temperature variation by regions of Brazil.")
 
     plt.figure()
-
-    g = sns.relplot(
-        data=df,
-        x="month",
-        y="max_temp",
-        col="region_name",
-        height=4,
-        aspect=0.7,
-        kind="line",
-    )
-    (
-        g.map(plt.axhline, y=0, color=".7", dashes=(2, 1), zorder=0)
-        .set_axis_labels("Mês", "Temperature (Maximum)")
-        .set_titles("Região: {col_name}")
-        .tight_layout(w_pad=0)
-    )
-
     with st.spinner("Little more... Plotting the results..."):
+        g = sns.relplot(
+            data=df,
+            x="month",
+            y="max_temp",
+            col="region_name",
+            height=4,
+            aspect=0.7,
+            kind="line",
+        )
+        (
+            g.map(plt.axhline, y=0, color=".7", dashes=(2, 1), zorder=0)
+            .set_axis_labels("Mês", "Temperature (Maximum)")
+            .set_titles("Região: {col_name}")
+            .tight_layout(w_pad=0)
+        )
         st.pyplot(plt)
 
     plt.figure()
-
-    sns.set(rc={"figure.figsize": (13, 9)})
-    ax = sns.lineplot(y="max_temp", x="month", data=df, hue="region_name")
-    ax.set(
-        xlabel="Mês",
-        ylabel="Temperature (Maximum)",
-        title="Maximum temperature variation by regions of Brazil",
-    )
-    ax.legend().set_title("")
-
     with st.spinner("Little more... Plotting the results..."):
+        sns.set(rc={"figure.figsize": (13, 9)})
+        ax = sns.lineplot(y="max_temp", x="month", data=df, hue="region_name")
+        ax.set(
+            xlabel="Mês",
+            ylabel="Temperature (Maximum)",
+            title="Maximum temperature variation by regions of Brazil",
+        )
+        ax.legend().set_title("")
         st.pyplot(plt)
 
 
