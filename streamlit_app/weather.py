@@ -10,7 +10,6 @@ from stations import Stations
 
 INPUT_PATH = Path("data/brazil_weather/")
 OUTPUT_PATH = Path("data/")
-
 FILE_EXTENSION = ".csv"
 COLUMNS = {
     "Data Medicao": "date",
@@ -45,14 +44,17 @@ COL_NUMBERS = [
 class Weather:
     def __init__(self, fraction: float) -> None:
         self.stations = Stations()
-        self.get_sample_weather(fraction)
+        self.weather_df = self.get_sample_weather(fraction)
 
     def asfloat_inplace(self, df: pd.DataFrame, columns: list):
         for col in columns:
             if df[col].dtype in [object, str]:
                 df[col] = df[col].str.replace(",", ".").astype(float)
+        return df
 
-    def get_sample_weather(self, fraction: float):
+    def get_sample_weather(self, sample: float):
+        stations_df = self.stations.stations_unification()
+
         all_cities_df = []
         for filename in INPUT_PATH.iterdir():
             current_df = pd.read_csv(filename, sep=";", header=9)
@@ -64,30 +66,19 @@ class Weather:
                 all_cities_df.append(current_df)
                 file.close()
 
-        stations_df = self.stations.stations_unification()
+        df = pd.concat(all_cities_df)
+        df.rename(columns=COLUMNS, inplace=True)
+        df.drop("Unnamed: 11", axis=1, inplace=True)
 
-        self.weather_df = pd.concat(all_cities_df)
-        self.weather_df.rename(columns=COLUMNS, inplace=True)
-        self.weather_df.drop("Unnamed: 11", axis=1, inplace=True)
-
-        self.weather_df = pd.merge(
-            left=self.weather_df,
+        df = pd.merge(
+            left=df,
             right=stations_df,
             left_on="station",
             right_on="station",
         )
 
-        self.asfloat_inplace(self.weather_df, COL_NUMBERS)
-        self.weather_df = self.weather_df.sample(frac=fraction, replace=True, random_state=1)
-        # weather_df.to_csv(OUTPUT_PATH.joinpath(f"weather{FILE_EXTENSION}"), index=False)
-
-    def get_stations_location(self):
-        df = self.weather_df.copy()
-
-        df = df.drop(df.columns.difference(["longitude", "latitude", "region"]), axis=1)
-        df = df.loc[df["latitude"] > -40]
-
-        return df
+        df = self.asfloat_inplace(df, COL_NUMBERS)
+        return df.sample(frac=sample / 100, replace=True, random_state=1)
 
     def get_unique_regions(self):
         return self.weather_df.region.unique()

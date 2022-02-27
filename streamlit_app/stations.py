@@ -17,7 +17,7 @@ COLUMNS_NAME = {
     "VL_LONGITUDE": "longitude",
     "VL_ALTITUDE": "altitude",
 }
-REGION = {
+UF = {
     "region": [
         "N",
         "N",
@@ -77,6 +77,10 @@ REGION = {
         "SC",
     ],
 }
+REGION = {
+    "region": ["N", "NE", "CO", "SE", "S"],
+    "name": ["Norte", "Nordeste", "Centro Oeste", "Sudeste", "Sul"],
+}
 
 
 class Stations:
@@ -87,6 +91,17 @@ class Stations:
             usecols=USECOLS,
         )
         stations_df.rename(columns=COLUMNS_NAME, inplace=True)
-        region_df = pd.DataFrame(REGION)
+        region_df = pd.DataFrame(UF)
 
-        return pd.merge(left=stations_df, right=region_df, left_on="uf", right_on="uf")
+        stations_df = pd.merge(left=stations_df, right=region_df, left_on="uf", right_on="uf")
+        stations_df = pd.merge(
+            left=stations_df, right=pd.DataFrame(REGION), left_on="region", right_on="region"
+        )
+
+        return stations_df
+
+    def asfloat_inplace(self, df: pd.DataFrame, columns: list):
+        for col in columns:
+            if df[col].dtype in [object, str]:
+                df[col] = df[col].str.replace(",", ".").astype(float)
+        return df
