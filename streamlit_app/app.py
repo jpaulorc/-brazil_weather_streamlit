@@ -95,9 +95,9 @@ def display_header():
             labels=weather.get_unique_regions(), loc="center right", title="Region"
         )
 
-        # plt.show()
+        plt.show()
 
-        st.write(fig)
+        # st.write(fig)
 
 
 display_header()
