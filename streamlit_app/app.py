@@ -1,34 +1,13 @@
-"""import csv
-import glob
-import itertools
-import os
-import random
-
-import altair as alt
 import bar_chart_race as bcr
-import folium
-import matplotlib.patches as mpatches
-import missingno as msno
-
-import plotly.express as px
-import plotly.graph_objects as go
-import requests
-"""
-from datetime import datetime, timedelta
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 import seaborn as sns
 import streamlit as st
+import streamlit.components.v1 as components
 from stations import Stations
-
-# from PIL import Image
 from weather import Weather
-
-# from branca.element import Figure
-
 
 KAGGLE_URL = "https://www.kaggle.com/gbofrc/complete-brazil-weather-database-20002020"
 STATIONS_URL = "https://portal.inmet.gov.br/paginas/catalogoaut"
@@ -93,7 +72,7 @@ def stations_location():
             """
             ### Identification of the analyzed places.
 
-            According to the Latitude and Longitude information we can identify the location of 
+            According to the Latitude and Longitude information we can identify the location of
             the weather measuring stations on Brazil's map.
             """
         )
@@ -244,8 +223,8 @@ def plot_brazil_max_temp(df):
     set_plot_title("Maximum Temperature Variation in Brazil (per month)")
     set_plot_description(
         """
-        We can see that the maximum temperature in Brazil reaches its highest 
-        value between the months of October and February. However, if we consider 
+        We can see that the maximum temperature in Brazil reaches its highest
+        value between the months of October and February. However, if we consider
         each region of Brazil, we can see that the highest temperature is
         reached in different months of the year.
         """
@@ -299,11 +278,261 @@ def plot_brazil_regions_max_temp(df):
         st.pyplot(plt)
 
 
+def plot_variables_byregion(weather_df):
+    set_plot_title("Variables by region (Average)")
+    set_plot_description(
+        """
+        Checking the average of some variables, we can see that there are large
+        variations by region. An example is the average exclusion in the
+        Northeast region is considerably lower than in other regions.
+        """
+    )
+
+    with st.spinner("Little more... Working on the data..."):
+        df = weather_df.loc[
+            :,
+            [
+                "tot_precipitation",
+                "avg_atm_pressure",
+                "avg_dew_temp",
+                "avg_temp",
+                "avg_rel_humidity",
+                "altitude",
+                "region",
+            ],
+        ]
+        df.dropna(inplace=True)
+
+        columns = {
+            "tot_precipitation": "Precipitation (Total)",
+            "avg_atm_pressure": "Atmospheric Pressure (Average)",
+            "avg_dew_temp": "Dew Temperature (Average)",
+            "avg_temp": "Temperature (Average)",
+            "avg_rel_humidity": "Relative Humidity (Average)",
+            "altitude": "Altitude",
+        }
+
+        df.rename(columns=columns, inplace=True)
+
+        region = {
+            "region": ["N", "NE", "CO", "SE", "S"],
+            "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
+        }
+
+        region_df = pd.DataFrame(region)
+        df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
+
+        df = df.groupby(["region_name"]).mean()
+        df.reset_index(level=0, inplace=True)
+
+        regions = df.region_name.unique()
+
+    with st.spinner("Little more... Plotting the results..."):
+        fig = go.Figure(
+            data=[
+                go.Bar(
+                    name="Precipitation",
+                    x=regions,
+                    y=df["Precipitation (Total)"],
+                    yaxis="y",
+                    offsetgroup=1,
+                ),
+                go.Bar(
+                    name="Atmospheric Pressure",
+                    x=regions,
+                    y=df["Atmospheric Pressure (Average)"],
+                    yaxis="y2",
+                    offsetgroup=2,
+                ),
+                go.Bar(
+                    name="Dew Temperature",
+                    x=regions,
+                    y=df["Dew Temperature (Average)"],
+                    yaxis="y3",
+                    offsetgroup=3,
+                ),
+                go.Bar(
+                    name="Temperature",
+                    x=regions,
+                    y=df["Temperature (Average)"],
+                    yaxis="y4",
+                    offsetgroup=4,
+                ),
+                go.Bar(
+                    name="Relative Humidity",
+                    x=regions,
+                    y=df["Relative Humidity (Average)"],
+                    yaxis="y5",
+                    offsetgroup=5,
+                ),
+            ],
+            layout={
+                "yaxis": {
+                    "title": "",
+                    "visible": False,
+                    "showticklabels": False,
+                },
+                "yaxis2": {
+                    "title": "",
+                    "overlaying": "y",
+                    "side": "right",
+                    "visible": False,
+                    "showticklabels": False,
+                },
+                "yaxis3": {
+                    "title": "",
+                    "overlaying": "y",
+                    "side": "right",
+                    "visible": False,
+                    "showticklabels": False,
+                },
+                "yaxis4": {
+                    "title": "",
+                    "overlaying": "y",
+                    "side": "right",
+                    "visible": False,
+                    "showticklabels": False,
+                },
+                "yaxis5": {
+                    "title": "",
+                    "overlaying": "y",
+                    "side": "right",
+                    "visible": False,
+                    "showticklabels": False,
+                },
+            },
+        )
+
+        fig.update_layout(barmode="group")
+        st.plotly_chart(fig, use_container_width=True)
+
+
+def set_air_humidity_byregion(weather_df):
+    with st.spinner("Little more... Working on the data..."):
+        df = weather_df.loc[:, ["date", "avg_rel_humidity", "region", "uf"]]
+        df.dropna(inplace=True)
+
+        region = {
+            "region": ["N", "NE", "CO", "SE", "S"],
+            "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
+        }
+
+        region_df = pd.DataFrame(region)
+        df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
+
+        return df.sample(10000)
+
+
+def plot_air_humidity_byregion(df):
+    set_plot_title("Variation of Relative Air Humidity (Average)")
+
+    st.markdown("#### by Region")
+
+    set_plot_description(
+        """
+        We can observe that the North region has a smaller interquartile range
+        than the other regions. We also see that the minimum value is quite
+        high when compared to other regions. Which generates a large range of outliers.
+        """
+    )
+
+    with st.spinner("Little more... Plotting the results..."):
+        fig = go.Figure()
+
+        fig.add_trace(go.Box(x=df["region_name"], y=df["avg_rel_humidity"], notched=False))
+
+        fig.update_layout(boxmode="group")
+        st.plotly_chart(fig, use_container_width=True)
+
+
+def plot_air_humidity_selected_region(df, cod_region):
+    set_plot_title("Variation of Relative Air Humidity (Average)")
+
+    region = {"N": "North", "NE": "North East", "CO": "Midwest", "SE": "South East", "S": "South"}
+
+    st.markdown(f"#### Region: {region[cod_region]}")
+
+    with st.spinner("Little more... Plotting the results..."):
+        fig = go.Figure()
+
+        df = df.loc[df["region"] == cod_region, :]
+
+        fig = go.Figure()
+
+        fig.add_trace(go.Box(x=df["uf"], y=df["avg_rel_humidity"], notched=False))
+
+        fig.update_layout(boxmode="group")
+        st.plotly_chart(fig, use_container_width=True)
+
+
+def set_accumulated_rainfall(weather_df):
+    with st.spinner("Little more... Working on the data..."):
+        df = weather_df.loc[:, ["date", "tot_precipitation", "region", "uf"]]
+        df.dropna(inplace=True)
+        df = df.sample(10000)
+
+        df["year_month"] = pd.to_datetime(df["date"]).dt.to_period("M")
+
+        region = {
+            "region": ["N", "NE", "CO", "SE", "S"],
+            "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
+        }
+
+        region_df = pd.DataFrame(region)
+        df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
+
+        return df.sort_values(by=["year_month"])
+
+
+def plot_rainfall_byregion(df):
+    set_plot_title("Accumulated rainfall in Brazil")
+
+    st.markdown("#### by Region")
+
+    with st.spinner("Little more... Plotting the results..."):
+        region_df = df.copy()
+
+        region_df = region_df.pivot_table(
+            values="tot_precipitation", index=["year_month"], columns="region_name"
+        )
+        region_df = region_df.fillna(0)
+
+        region_df.sort_values(list(region_df.columns), inplace=True)
+        region_df = region_df.sort_index()
+
+        region_df.iloc[:, 0:-1] = region_df.iloc[:, 0:-1].cumsum()
+
+        top_rainning = set()
+        for index, row in region_df.iterrows():
+            top_rainning |= set(row[row > 0].sort_values(ascending=False).index)
+
+        region_df = region_df[top_rainning]
+
+        components.html(
+            bcr.bar_chart_race(
+                df=region_df,
+                sort="desc",
+                title="Accumulated rainfall by Regions of Brazil",
+            ).data,
+            height=500,
+        )
+
+
 sample_size = display_header()
 stations_location()
 weather_df = get_sample(sample_size)
-plot_corretation(weather_df)
+
+"""plot_corretation(weather_df)
 
 df_by_region = set_weather_by_region(weather_df)
 plot_brazil_max_temp(df_by_region)
 plot_brazil_regions_max_temp(df_by_region)
+
+plot_variables_byregion(weather_df)
+
+humidity_df = set_air_humidity_byregion(weather_df)
+plot_air_humidity_byregion(humidity_df)
+plot_air_humidity_selected_region(humidity_df, "S")"""
+
+rainfall_df = set_accumulated_rainfall(weather_df)
+plot_rainfall_byregion(rainfall_df)
