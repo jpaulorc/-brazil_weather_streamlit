@@ -16,6 +16,8 @@ GITHUB_BADGE = "https://badgen.net/badge/icon/GitHub?icon=github&color=black&lab
 GITHUB_LINK = "https://github.com/jpaulorc/brazil_weather_streamlit"
 INMET_URL = "https://portal.inmet.gov.br/"
 
+REGION = {"N": "North", "NE": "North East", "CO": "Midwest", "SE": "South East", "S": "South"}
+
 st.set_page_config(layout="wide")
 
 
@@ -203,17 +205,20 @@ def plot_corretation(weather_df):
         st.pyplot(plt)
 
 
+def get_region_dataframe():
+    region = {
+        "region": ["N", "NE", "CO", "SE", "S"],
+        "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
+    }
+    return pd.DataFrame(region)
+
+
 def set_weather_by_region(weather_df):
     with st.spinner("Little more... Working on the data..."):
         df = weather_df.loc[:, ["max_temp", "date", "region"]]
         df.dropna(inplace=True)
         df["month"] = pd.DatetimeIndex(df["date"]).month
-        region = {
-            "region": ["N", "NE", "CO", "SE", "S"],
-            "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
-        }
-        region_df = pd.DataFrame(region)
-        df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
+        df = pd.merge(left=df, right=get_region_dataframe(), left_on="region", right_on="region")
         df = df.sort_values(by=["month"])
 
     return df
@@ -313,14 +318,7 @@ def plot_variables_byregion(weather_df):
         }
 
         df.rename(columns=columns, inplace=True)
-
-        region = {
-            "region": ["N", "NE", "CO", "SE", "S"],
-            "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
-        }
-
-        region_df = pd.DataFrame(region)
-        df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
+        df = pd.merge(left=df, right=get_region_dataframe(), left_on="region", right_on="region")
 
         df = df.groupby(["region_name"]).mean()
         df.reset_index(level=0, inplace=True)
@@ -411,14 +409,7 @@ def set_air_humidity_byregion(weather_df):
     with st.spinner("Little more... Working on the data..."):
         df = weather_df.loc[:, ["date", "avg_rel_humidity", "region", "uf"]]
         df.dropna(inplace=True)
-
-        region = {
-            "region": ["N", "NE", "CO", "SE", "S"],
-            "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
-        }
-
-        region_df = pd.DataFrame(region)
-        df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
+        df = pd.merge(left=df, right=get_region_dataframe(), left_on="region", right_on="region")
 
         return df.sample(10000)
 
@@ -445,17 +436,18 @@ def plot_air_humidity_byregion(df):
         st.plotly_chart(fig, use_container_width=True)
 
 
-def plot_air_humidity_selected_region(df, cod_region):
+def get_region_name(region_code):
+    return REGION[region_code]
+
+
+def plot_air_humidity_selected_region(df, region_code):
     set_plot_title("Variation of Relative Air Humidity (Average)")
-
-    region = {"N": "North", "NE": "North East", "CO": "Midwest", "SE": "South East", "S": "South"}
-
-    st.markdown(f"#### Region: {region[cod_region]}")
+    st.markdown(f"#### Region: {get_region_name(region_code)}")
 
     with st.spinner("Little more... Plotting the results..."):
         fig = go.Figure()
 
-        df = df.loc[df["region"] == cod_region, :]
+        df = df.loc[df["region"] == region_code, :]
 
         fig = go.Figure()
 
@@ -472,50 +464,63 @@ def set_accumulated_rainfall(weather_df):
         df = df.sample(10000)
 
         df["year_month"] = pd.to_datetime(df["date"]).dt.to_period("M")
-
-        region = {
-            "region": ["N", "NE", "CO", "SE", "S"],
-            "region_name": ["North", "North East", "Midwest", "Southeast", "South"],
-        }
-
-        region_df = pd.DataFrame(region)
-        df = pd.merge(left=df, right=region_df, left_on="region", right_on="region")
+        df = pd.merge(left=df, right=get_region_dataframe(), left_on="region", right_on="region")
 
         return df.sort_values(by=["year_month"])
 
 
-def plot_rainfall_byregion(df):
-    set_plot_title("Accumulated rainfall in Brazil")
-
-    st.markdown("#### by Region")
-
-    with st.spinner("Little more... Plotting the results..."):
-        region_df = df.copy()
-
-        region_df = region_df.pivot_table(
-            values="tot_precipitation", index=["year_month"], columns="region_name"
-        )
-        region_df = region_df.fillna(0)
-
-        region_df.sort_values(list(region_df.columns), inplace=True)
-        region_df = region_df.sort_index()
-
-        region_df.iloc[:, 0:-1] = region_df.iloc[:, 0:-1].cumsum()
-
+def get_data_toplot(df, columns):
+    with st.spinner("Little more... Working on the data..."):
+        df = df.pivot_table(values="tot_precipitation", index=["year_month"], columns=columns)
+        df = df.fillna(0)
+        df.sort_values(list(df.columns), inplace=True)
+        df = df.sort_index()
+        df.iloc[:, 0:-1] = df.iloc[:, 0:-1].cumsum()
         top_rainning = set()
-        for index, row in region_df.iterrows():
+        for index, row in df.iterrows():
             top_rainning |= set(row[row > 0].sort_values(ascending=False).index)
 
-        region_df = region_df[top_rainning]
+        return df[top_rainning]
 
-        components.html(
-            bcr.bar_chart_race(
-                df=region_df,
-                sort="desc",
-                title="Accumulated rainfall by Regions of Brazil",
-            ).data,
-            height=500,
+
+def plot_race_chart(df, title, height, sort="desc"):
+    components.html(
+        bcr.bar_chart_race(
+            df=df,
+            sort=sort,
+            title=title,
+        ).data,
+        height=height,
+    )
+
+
+def plot_rainfall_byregion(df):
+    set_plot_title("Accumulated rainfall in Brazil")
+    st.markdown("#### by Region")
+
+    with st.spinner("Little more... Plotting the results by Region..."):
+        region_df = get_data_toplot(df, "region_name")
+        plot_race_chart(region_df, "Accumulated rainfall by Regions of Brazil", 500, sort="desc")
+
+
+def plot_rainfall_bystate(df, region_code):
+    set_plot_title("Accumulated rainfall in Brazil")
+    st.markdown(f"#### by States of {get_region_name(region_code)}")
+
+    with st.spinner("Little more... Plotting the results by State..."):
+        uf_df = get_data_toplot(df.loc[df["region"].isin([region_code]), :], "uf")
+        plot_race_chart(
+            uf_df,
+            f"Accumulated rainfall by states of {get_region_name(region_code)} region of Brazil",
+            500,
+            sort="desc",
         )
+
+
+def race_plot(df, region_code):
+    rainfall_df = set_accumulated_rainfall(df)
+    plot_rainfall_byregion(rainfall_df)
+    plot_rainfall_bystate(rainfall_df, region_code)
 
 
 sample_size = display_header()
@@ -534,5 +539,4 @@ humidity_df = set_air_humidity_byregion(weather_df)
 plot_air_humidity_byregion(humidity_df)
 plot_air_humidity_selected_region(humidity_df, "S")"""
 
-rainfall_df = set_accumulated_rainfall(weather_df)
-plot_rainfall_byregion(rainfall_df)
+race_plot(weather_df, "SE")
